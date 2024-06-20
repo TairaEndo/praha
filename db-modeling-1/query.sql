@@ -27,7 +27,7 @@ FROM Orders o
 JOIN Customers c ON o.customer_id = c.id
 JOIN OrderItems oi ON o.id = oi.order_id
 JOIN MenuItems mi ON oi.menu_item_id = mi.id
-WHERE o.pickup_date = '2024-03-12';
+WHERE DATE_FORMAT(o.pickup_date, '%Y-%m-%d') = '2024-03-12';
 
 -- リマインダーが必要な注文を取得
 SELECT *
@@ -70,8 +70,11 @@ WHERE start_date >= '2024-06-01'
 
 ---- ポイント関連のクエリ
 
--- ポイントの付与と使用の合計を計算
+-- 顧客ごとにポイントの付与と使用の合計を計算
 SELECT
-  SUM(CASE WHEN transaction_type = '付与' THEN points ELSE 0 END) AS total_granted_points,
-  SUM(CASE WHEN transaction_type = '使用' THEN points ELSE 0 END) AS total_used_points
-FROM PointsTransactions;
+  c.name AS customer_name,
+  SUM(CASE WHEN pt.transaction_type = '付与' THEN pt.points ELSE 0 END) AS total_granted_points,
+  SUM(CASE WHEN pt.transaction_type = '使用' THEN pt.points ELSE 0 END) AS total_used_points
+FROM Customers c
+LEFT JOIN PointsTransactions pt ON c.id = pt.customer_id
+GROUP BY c.id, c.name;
